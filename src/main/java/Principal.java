@@ -19,7 +19,6 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 
@@ -53,7 +52,16 @@ public class Principal extends javax.swing.JFrame {
 
 	private String carpeta;
 
+	private LinkedList<String> lista;
+
+	private TextFieldShadow panel;
+
+	private String urlApuesta;
+
 	public Principal() throws IOException {
+
+		System.setProperty("webdriver.gecko.driver",
+				new File(".").getCanonicalPath() + "\\geckodriver\\geckodriver.exe");
 
 		carpeta = JMthos.directorioActual() + "exportaciones";
 
@@ -89,13 +97,57 @@ public class Principal extends javax.swing.JFrame {
 
 	}
 
-	public static String limpiarEspacios(String texto) {
+	public String limpiarEspacios(String texto) {
 
 		String textoSinEspacios = texto.trim();
 
-		textoSinEspacios = textoSinEspacios.replaceAll("\\s+", " ");
-
 		Document document = Jsoup.parse(textoSinEspacios);
+
+		Element menu3Li = document.select("#menu3").first();
+
+		urlApuesta = menu3Li.select("a").attr("href");
+
+		texto = texto.substring(texto.indexOf("<table id=\"table_v1\""), texto.indexOf("Data Comparison"));
+
+		Element primeraFila = document.select("table.team-table-home tbody tr").first();
+
+		String valorPrimeraFila = primeraFila.text();
+
+		valorPrimeraFila = valorPrimeraFila.trim();
+
+		lista.add(valorPrimeraFila);
+
+		Element firstTr = document.select("tr").first();
+
+		if (firstTr != null) {
+
+			firstTr.remove();
+
+		}
+
+		Element table = document.select("#table_v2").first();
+
+		if (table != null) {
+
+			Element td = table.select("tbody tr td").first();
+
+			if (td != null) {
+
+				Element anchor = td.select("a").first();
+
+				if (anchor != null) {
+
+					String hrefValue = anchor.attr("href");
+
+					String textValue = anchor.text();
+
+					lista.add(textValue);
+
+				}
+
+			}
+
+		}
 
 		Elements tdElements = document.select("td[id=td_stat1]");
 
@@ -121,9 +173,39 @@ public class Principal extends javax.swing.JFrame {
 
 		textoSinEspacios = document.outerHtml();
 
-		JMthos.crearFichero("hola.txt", textoSinEspacios);
+		lista.add("Apuestas");
 
 		return textoSinEspacios;
+
+	}
+
+	private static String eliminarPrimerTR(String html, String tablaId) {
+
+		Document document = Jsoup.parse(html);
+
+		Element table = document.select(tablaId).first();
+
+		if (table != null) {
+
+			Element tbody = table.select("tbody").first();
+
+			if (tbody != null) {
+
+				Elements trs = tbody.select("tr");
+
+				if (!trs.isEmpty()) {
+
+					Element primerTR = trs.first();
+
+					primerTR.remove();
+
+				}
+
+			}
+
+		}
+
+		return document.outerHtml();
 
 	}
 
@@ -132,9 +214,6 @@ public class Principal extends javax.swing.JFrame {
 		try {
 
 			panel_1.setEnabled(false);
-
-			System.setProperty("webdriver.gecko.driver",
-					new File(".").getCanonicalPath() + "\\geckodriver\\geckodriver.exe");
 
 			WebDriver driver = new FirefoxDriver();
 
@@ -154,22 +233,9 @@ public class Principal extends javax.swing.JFrame {
 
 			String pageSource = driver.getPageSource();
 
-			pageSource = pageSource.substring(pageSource.indexOf("<table id=\"table_v1\""),
-					pageSource.indexOf("Data Comparison"));
+			lista = new LinkedList<>();
 
 			pageSource = limpiarEspacios(pageSource);
-
-			driver.quit();
-
-			LinkedList<String> lista = new LinkedList<>();
-
-			lista.add("Puntuaciones anteriores Local");
-
-			lista.add("Puntuaciones anteriores Visitante");
-
-			lista.add("Apuestas");
-
-			JMthos.crearFichero("prueba.html", pageSource);
 
 			String fecha = JMthos.saberFechaYHoraActual(true);
 
@@ -178,6 +244,41 @@ public class Principal extends javax.swing.JFrame {
 			fecha = fecha.replace(" ", "_");
 
 			fecha = fecha.replace(":", "_");
+
+			urlApuesta = "https://" + url.substring(8).substring(0, url.substring(8).indexOf("/") + 1) + "1x2-odds"
+					+ urlApuesta.substring(urlApuesta.lastIndexOf("/"));
+
+			driver.get(urlApuesta);
+
+			String contenidoHTML = driver.getPageSource();
+
+			contenidoHTML = contenidoHTML.substring(
+					contenidoHTML.indexOf("<div id=\"divFooterFload\" class=\"oddfooterDiv\">"),
+					contenidoHTML.length());
+
+			contenidoHTML = contenidoHTML.substring(0, contenidoHTML.indexOf("<div id=\"divnotes\""));
+
+			contenidoHTML = contenidoHTML
+					.replace("<td width=\"1\" rowspan=\"6\" class=\"gbg lb rb\" style=\"display:none;\"></td>", "");
+
+			contenidoHTML = contenidoHTML
+					.replace("<th width=\"1\" rowspan=\"6\" class=\"lb rb\" style=\"display:none;\"></th>", "");
+
+			contenidoHTML += "</body>\r\n" + "</html>";
+
+			driver.quit();
+
+			pageSource = pageSource.substring(pageSource.indexOf("<table id=\"table_v1\""), pageSource.length());
+
+			pageSource = pageSource.substring(0, pageSource.indexOf("<div id=\"porletAd5\">"));
+
+			pageSource = eliminarPrimerTR(pageSource, "#table_v1");
+
+			pageSource = eliminarPrimerTR(pageSource, "#table_v2");
+
+			pageSource += contenidoHTML;
+
+			pageSource = "<html>\r\n" + "<head>\r\n" + "</head>\r\n" + "<body>\r\n" + pageSource;
 
 			convertHTMLtoExcel(pageSource, carpeta + JMthos.saberSeparador() + fecha + ".xls", lista);
 
@@ -192,93 +293,104 @@ public class Principal extends javax.swing.JFrame {
 		}
 
 		catch (Exception e1) {
+
 			e1.printStackTrace();
+
 		}
 
 	}
 
-	public static void convertHTMLtoExcel(String htmlContent, String outputPath, List<String> lista)
-			throws IOException {
+	public static void convertHTMLtoExcel(String htmlContent, String outputPath, List<String> lista) {
 
-		Document document = Jsoup.parse(htmlContent);
+		try {
 
-		Workbook workbook = new HSSFWorkbook();
+			Document document = Jsoup.parse(htmlContent);
 
-		Elements tables = document.select("table");
+			Workbook workbook = new HSSFWorkbook();
 
-		String dato = "";
+			Elements tables = document.select("table");
 
-		Element table;
+			String dato = "";
 
-		org.apache.poi.ss.usermodel.Sheet sheet;
+			Element table;
 
-		Element row;
+			org.apache.poi.ss.usermodel.Sheet sheet;
 
-		Elements cells;
+			Element row;
 
-		Row excelRow;
+			Elements cells;
 
-		Element cell;
+			Row excelRow;
 
-		String cellValue;
+			Element cell;
 
-		Cell excelCell;
+			String cellValue;
 
-		Elements rows;
+			Cell excelCell;
 
-		for (int tableIndex = 0; tableIndex < tables.size(); tableIndex++) {
+			Elements rows;
 
-			table = tables.get(tableIndex);
+			for (int tableIndex = 0; tableIndex < 3; tableIndex++) {
 
-			if (lista == null) {
+				table = tables.get(tableIndex);
 
-				dato = "Sheet " + tableIndex;
+				if (lista == null) {
 
-			}
+					dato = "Sheet " + tableIndex;
 
-			else {
+				}
 
-				dato = lista.get(tableIndex);
+				else {
 
-			}
+					dato = lista.get(tableIndex);
 
-			sheet = workbook.createSheet(dato);
+				}
 
-			rows = table.select("tr");
+				sheet = workbook.createSheet(dato);
 
-			for (int i = 0; i < rows.size(); i++) {
+				rows = table.select("tr");
 
-				row = rows.get(i);
+				for (int i = 0; i < rows.size(); i++) {
 
-				cells = row.select("td");
+					row = rows.get(i);
 
-				excelRow = sheet.createRow(i);
+					cells = row.select("td");
 
-				for (int j = 0; j < cells.size(); j++) {
+					excelRow = sheet.createRow(i);
 
-					cell = cells.get(j);
+					for (int j = 0; j < cells.size(); j++) {
 
-					cellValue = cell.text();
+						cell = cells.get(j);
 
-					excelCell = excelRow.createCell(j);
+						cellValue = cell.text();
 
-					excelCell.setCellValue(cellValue);
+						excelCell = excelRow.createCell(j);
+
+						excelCell.setCellValue(cellValue);
+
+					}
 
 				}
 
 			}
 
+			java.nio.file.Path outputFilePath = FileSystems.getDefault().getPath(outputPath);
+
+			try (FileOutputStream outputStream = new FileOutputStream(outputFilePath.toString())) {
+
+				workbook.write(outputStream);
+
+			}
+
+			workbook.close();
+
 		}
 
-		java.nio.file.Path outputFilePath = FileSystems.getDefault().getPath(outputPath);
+		catch (Exception e) {
 
-		try (FileOutputStream outputStream = new FileOutputStream(outputFilePath.toString())) {
-
-			workbook.write(outputStream);
+			e.printStackTrace();
 
 		}
-
-		workbook.close();
 
 	}
 
@@ -290,10 +402,18 @@ public class Principal extends javax.swing.JFrame {
 
 		setResizable(false);
 
-		TextFieldShadow panel = new TextFieldShadow();
+		panel = new TextFieldShadow();
+
+		panel.setDistanciaDeSombra(0);
+
+		panel.setDireccionDeSombra(0);
+
+		panel.setBackground(Color.WHITE);
 
 		panel.addKeyListener(new KeyAdapter() {
+
 			@Override
+
 			public void keyPressed(KeyEvent e) {
 
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -306,9 +426,11 @@ public class Principal extends javax.swing.JFrame {
 
 		});
 
-		panel.setFont(new Font("Dialog", Font.PLAIN, 20));
+		panel.setFont(new Font("Dialog", Font.PLAIN, 25));
 
 		panel_1 = new NButton("Exportar");
+
+		panel_1.setFont(new Font("Tahoma", Font.PLAIN, 25));
 
 		panel_1.addActionListener(new ActionListener() {
 
@@ -324,39 +446,44 @@ public class Principal extends javax.swing.JFrame {
 
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-		lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 20));
+		lblNewLabel.setFont(new Font("Times New Roman", Font.PLAIN, 30));
 
 		ResizedButton btnNewButton_1 = new ResizedButton(true, "");
+
 		btnNewButton_1.addActionListener(new ActionListener() {
+
 			public void actionPerformed(ActionEvent e) {
+
+				JMthos.abrirCarpeta(carpeta);
+
 			}
+
 		});
+
 		btnNewButton_1.setBackground(Color.WHITE);
 
 		btnNewButton_1.setIcon(new ImageIcon(Principal.class.getResource("/imgs/folder.png")));
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
 		layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(layout.createSequentialGroup()
-				.addGap(49)
+				.addGap(24)
 				.addGroup(layout.createParallelGroup(Alignment.TRAILING, false)
-						.addComponent(lblNewLabel, Alignment.LEADING, GroupLayout.DEFAULT_SIZE,
-								GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 						.addComponent(panel, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE,
 								Short.MAX_VALUE)
-						.addComponent(panel_1, Alignment.LEADING, GroupLayout.PREFERRED_SIZE, 341,
-								GroupLayout.PREFERRED_SIZE))
-				.addPreferredGap(ComponentPlacement.RELATED)
-				.addComponent(btnNewButton_1, GroupLayout.PREFERRED_SIZE, 44, GroupLayout.PREFERRED_SIZE)
+						.addGroup(Alignment.LEADING,
+								layout.createSequentialGroup().addGap(25).addComponent(lblNewLabel))
+						.addComponent(panel_1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE))
+				.addGap(6).addComponent(btnNewButton_1, GroupLayout.PREFERRED_SIZE, 44, GroupLayout.PREFERRED_SIZE)
 				.addContainerGap(129, Short.MAX_VALUE)));
 		layout.setVerticalGroup(layout.createParallelGroup(Alignment.TRAILING).addGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(layout.createSequentialGroup()
 						.addGap(24)
 						.addComponent(lblNewLabel, GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE)
 						.addGap(18).addComponent(panel, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
-						.addGap(28).addComponent(panel_1, GroupLayout.PREFERRED_SIZE, 76, GroupLayout.PREFERRED_SIZE))
+						.addGap(18).addComponent(panel_1, GroupLayout.PREFERRED_SIZE, 76, GroupLayout.PREFERRED_SIZE))
 						.addGroup(layout.createSequentialGroup().addGap(163).addComponent(btnNewButton_1,
 								GroupLayout.PREFERRED_SIZE, 55, GroupLayout.PREFERRED_SIZE)))
-				.addContainerGap(32, Short.MAX_VALUE)));
+				.addContainerGap(42, Short.MAX_VALUE)));
 
 		getContentPane().setLayout(layout);
 
