@@ -346,6 +346,20 @@ public class Principal extends javax.swing.JFrame {
 
 				}
 
+				dato = dato.trim();
+
+				dato = dato.replace("'", "");
+
+				if (dato.contains(" ")) {
+
+					dato = dato.substring(dato.indexOf(" "));
+
+				}
+
+				dato = dato.replace("[", "");
+
+				dato = dato.replace("]", "");
+
 				sheet = workbook.createSheet(dato);
 
 				rows = table.select("tr");
