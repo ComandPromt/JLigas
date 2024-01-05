@@ -219,17 +219,9 @@ public class Principal extends javax.swing.JFrame {
 
 			driver.get(url);
 
-			WebElement selectElement = driver.findElement(By.id("selectMatchCount1"));
+			ponerValorSelect(driver, "selectMatchCount1");
 
-			Select select = new Select(selectElement);
-
-			select.selectByValue("20");
-
-			selectElement = driver.findElement(By.id("selectMatchCount2"));
-
-			select = new Select(selectElement);
-
-			select.selectByValue("20");
+			ponerValorSelect(driver, "selectMatchCount2");
 
 			String pageSource = driver.getPageSource();
 
@@ -300,6 +292,32 @@ public class Principal extends javax.swing.JFrame {
 
 	}
 
+	private void ponerValorSelect(WebDriver driver, String id) {
+
+		try {
+
+			WebElement selectElement = driver.findElement(By.id(id));
+
+			Select select = new Select(selectElement);
+
+			java.util.List<WebElement> options = selectElement.findElements(By.tagName("option"));
+
+			if (!options.isEmpty()) {
+
+				WebElement ultimoOption = options.get(options.size() - 1);
+
+				select.selectByValue(ultimoOption.getText());
+
+			}
+
+		}
+
+		catch (Exception e) {
+
+		}
+
+	}
+
 	public static void convertHTMLtoExcel(String htmlContent, String outputPath, List<String> lista) {
 
 		try {
@@ -350,15 +368,23 @@ public class Principal extends javax.swing.JFrame {
 
 				dato = dato.replace("'", "");
 
-				if (dato.contains(" ")) {
+				if (dato.contains("[")) {
 
-					dato = dato.substring(dato.indexOf(" "));
+					dato = dato.replace("[", "");
+
+					dato = dato.replace("]", "");
+
+					try {
+
+						dato = dato.substring(dato.indexOf(" "));
+
+					}
+
+					catch (Exception e) {
+
+					}
 
 				}
-
-				dato = dato.replace("[", "");
-
-				dato = dato.replace("]", "");
 
 				sheet = workbook.createSheet(dato);
 
