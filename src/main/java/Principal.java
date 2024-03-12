@@ -262,7 +262,15 @@ public class Principal extends javax.swing.JFrame {
 
 			pageSource = pageSource.substring(pageSource.indexOf("<table id=\"table_v1\""), pageSource.length());
 
-			pageSource = pageSource.substring(0, pageSource.indexOf("<div id=\"porletAd5\">"));
+			try {
+
+				pageSource = pageSource.substring(0, pageSource.indexOf("<div id=\"porletAd5\">"));
+
+			}
+
+			catch (Exception e) {
+
+			}
 
 			pageSource = eliminarPrimerTR(pageSource, "#table_v1");
 
@@ -469,6 +477,12 @@ public class Principal extends javax.swing.JFrame {
 		panel.setFont(new Font("Dialog", Font.PLAIN, 25));
 
 		panel_1 = new NButton("Exportar");
+		panel_1.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				System.out.println("aaaa");
+			}
+		});
 
 		panel_1.setFont(new Font("Tahoma", Font.PLAIN, 25));
 
