@@ -241,9 +241,9 @@ public abstract class MetodosPrograma {
 
 			pageSource = pageSource.substring(0, pageSource.indexOf("</table>") + 8);
 
-			pageSource = JMthos.eliminarEtiquetaHtml("th", "colspan", "3", pageSource, true);
+			pageSource = JMthos.eliminarEtiquetaHtml("th", "colspan", "3", pageSource, false);
 
-			pageSource = JMthos.eliminarEtiquetaHtml("td", "colspan", "3", pageSource, true);
+			pageSource = JMthos.eliminarEtiquetaHtml("td", "colspan", "3", pageSource, false);
 
 			datoTablas += pageSource;
 
@@ -261,9 +261,33 @@ public abstract class MetodosPrograma {
 
 			nombreArchivo = nombreArchivo.replace("&amp;", "");
 
+			nombreArchivo = nombreArchivo.replace("Results", "");
+
+			nombreArchivo = nombreArchivo.replace("Fixture", "");
+
+			nombreArchivo = nombreArchivo.replace("Standing", "");
+
+			nombreArchivo = nombreArchivo.replace("Bola", "");
+
+			nombreArchivo = nombreArchivo.replace("Livescore", "");
+
+			nombreArchivo = nombreArchivo.replace("Database", "");
+
+			nombreArchivo = nombreArchivo.replace("---", "-");
+
+			nombreArchivo = nombreArchivo.replace("--", "");
+
 			String filePath = carpeta + JMthos.saberSeparador() + nombreArchivo + "_" + fecha + ".xls";
 
-			ExportarPoi.createXlsFromHtmlTables(datoTablas, filePath);
+			datoTablas = JMthos.eliminarEtiqueta("sup", datoTablas);
+
+			datoTablas = JMthos.eliminarEtiqueta("span", datoTablas);
+
+			datoTablas = JMthos.eliminarPrimerTdDeCadaTr(datoTablas);
+
+			datoTablas = datoTablas.replace("<br>", "&nbsp;");
+
+			ExportarPoi.createXlsFromHtmlTables(datoTablas, filePath, false);
 
 		}
 
