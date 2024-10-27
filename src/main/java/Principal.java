@@ -100,55 +100,47 @@ public class Principal extends javax.swing.JFrame {
 
 					String fecha = JMthos.saberFechaYHoraActual(true);
 
-					if (url.contains("bola")) {
+					WebDriver driver = new FirefoxDriver();
 
-						WebDriver driver = new FirefoxDriver();
+					driver.get(url);
 
-						driver.get(url);
+					if (url.contains("league")) {
 
-						if (url.contains("match")) {
-
-							if (url.contains("live-")) {
-
-								url = url.replace("live-", "h2h-");
-
-								driver.get(url);
-
-							}
-
-							MetodosPrograma.mirarEnBolaMatch(carpeta, lista, fecha, driver);
-
-						}
-
-						else {
-
-							if (url.contains("league")) {
-
-								MetodosPrograma.mirarEnBola(url, carpeta, fecha, driver);
-
-							}
-
-						}
-
-						try {
-
-							Thread.sleep(1500);
-
-						}
-
-						catch (InterruptedException e1) {
-
-						}
-
-						driver.quit();
-
-						PopupAlerts alerta = new PopupAlerts();
-
-						alerta.setSize(550, 300);
-
-						alerta.mensaje("Archivo generado correctamente", AlertType.SUCCESS, 30, null);
+						MetodosPrograma.mirarEnBola(url, carpeta, fecha, driver);
 
 					}
+
+					else {
+
+						if (url.contains("live-")) {
+
+							url = url.replace("live-", "h2h-");
+
+							driver.get(url);
+
+						}
+
+						MetodosPrograma.mirarEnBolaMatch(carpeta, lista, fecha, driver);
+
+					}
+
+					try {
+
+						Thread.sleep(1500);
+
+					}
+
+					catch (InterruptedException e1) {
+
+					}
+
+					driver.quit();
+
+					PopupAlerts alerta = new PopupAlerts();
+
+					alerta.setSize(550, 300);
+
+					alerta.mensaje("Archivo generado correctamente", AlertType.SUCCESS, 30, null);
 
 				}
 

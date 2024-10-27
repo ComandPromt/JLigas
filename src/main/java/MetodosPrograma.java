@@ -279,6 +279,8 @@ public abstract class MetodosPrograma {
 
 			String filePath = carpeta + JMthos.saberSeparador() + nombreArchivo + "_" + fecha + ".xls";
 
+			filePath = filePath.replace(",", "");
+
 			datoTablas = JMthos.eliminarEtiqueta("sup", datoTablas);
 
 			datoTablas = JMthos.eliminarEtiqueta("span", datoTablas);
@@ -342,6 +344,10 @@ public abstract class MetodosPrograma {
 		pageSource = JMthos.eliminarEtiquetaHtml("tr", "class", "team-guest", pageSource, false);
 
 		pageSource = JMthos.eliminarEtiquetaHtml("tr", "name", "nodataTr", pageSource, false);
+
+		lista.set(0, lista.get(0).replace(",", ""));
+
+		lista.set(1, lista.get(1).replace(",", ""));
 
 		MetodosPrograma.convertHTMLtoExcel(pageSource, carpeta + JMthos.saberSeparador() + "BOLA--" + lista.get(0)
 				+ "-VS-" + lista.get(1) + "__" + fecha + ".xls", lista);
