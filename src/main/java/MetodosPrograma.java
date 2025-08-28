@@ -339,7 +339,15 @@ public abstract class MetodosPrograma {
 
 		pageSource = pageSource.substring(0, pageSource.lastIndexOf("</table>") + 8);
 
-		pageSource = pageSource.substring(0, pageSource.lastIndexOf("<div id=\"porletAd6\">"));
+		try {
+
+			pageSource = pageSource.substring(0, pageSource.lastIndexOf("<div id=\"porletAd6\">"));
+
+		}
+
+		catch (Exception e) {
+
+		}
 
 		pageSource = JMthos.eliminarEtiquetaHtml("tr", "class", "team-guest", pageSource, false);
 
